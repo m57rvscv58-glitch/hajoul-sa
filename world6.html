@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>HAJOUL WORLD 6.0</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#8fb7d2;font-family:Arial,sans-serif;color:white}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:fixed;inset:0;pointer-events:none}
+.top{position:absolute;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start}
+.logo{font-weight:900;letter-spacing:1px;text-shadow:0 2px 8px #000;font-size:19px}
+.pill{background:#071522b8;border:1px solid #ffffff44;border-radius:12px;padding:8px 11px;font-size:12px}
+#hint{position:absolute;top:58px;left:14px;background:#071522a8;padding:7px 10px;border-radius:9px;font-size:12px}
+.controls{position:absolute;bottom:18px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:end}
+.pad{display:grid;grid-template-columns:58px 58px 58px;grid-template-rows:58px 58px;gap:5px;pointer-events:auto}
+button{border:1px solid #ffffff70;background:#071522b8;color:white;border-radius:14px;font-weight:bold;font-size:14px;touch-action:none}
+.pad button{font-size:22px}.pad .up{grid-column:2}.pad .left{grid-column:1;grid-row:2}.pad .down{grid-column:2;grid-row:2}.pad .right{grid-column:3;grid-row:2}
+.pedals{display:flex;gap:9px;pointer-events:auto}.pedals button{width:70px;height:70px}.gas{background:#147c49d9}.brake{background:#9d2929d9}
+#status{position:absolute;right:14px;top:58px}
+@media(max-width:500px){.pad{grid-template-columns:52px 52px 52px;grid-template-rows:52px 52px}.pedals button{width:62px;height:64px}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+ <div class="top"><div class="logo">HAJOUL WORLD <span style="color:#8fffd0">6.0</span><div style="font-size:10px;font-weight:400">OPEN ROAD • PROTOTYPE</div></div><div class="pill" id="speed">0 KM/H</div></div>
+ <div id="hint">Drag left / right to steer • Hold GAS to drive</div>
+ <div id="status" class="pill">FREE DRIVE</div>
+ <div class="controls">
+  <div class="pad">
+   <button class="up" data-key="gas">▲</button><button class="left" data-key="left">◀</button><button class="down" data-key="brake">▼</button><button class="right" data-key="right">▶</button>
+  </div>
+  <div class="pedals"><button class="brake" data-key="brake">BRAKE</button><button class="gas" data-key="gas">GAS</button></div>
+ </div>
+</div>
+<script>
+(()=>{
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+let w=0,h=0,dpr=1;
+function resize(){dpr=Math.min(devicePixelRatio||1,2);w=innerWidth;h=innerHeight;canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+addEventListener('resize',resize);resize();
+const keys={gas:false,brake:false,left:false,right:false};
+document.querySelectorAll('[data-key]').forEach(b=>{
+ const k=b.dataset.key;
+ ['pointerdown'].forEach(ev=>b.addEventListener(ev,e=>{e.preventDefault();keys[k]=true;b.setPointerCapture?.(e.pointerId)}));
+ ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,e=>{keys[k]=false}));
+});
+let speed=0,steer=0,offset=0,road=0,last=0,dist=0;
+let touchX=null;
+canvas.addEventListener('pointerdown',e=>{touchX=e.clientX});
+canvas.addEventListener('pointermove',e=>{if(touchX!==null){steer=Math.max(-1,Math.min(1,(e.clientX-touchX)/100));touchX=e.clientX}});
+canvas.addEventListener('pointerup',()=>touchX=null);
+function rounded(x,y,ww,hh,r){ctx.beginPath();ctx.roundRect(x,y,ww,hh,r);ctx.fill()}
+function draw(t){
+ const dt=Math.min((t-last)/1000||0,0.04);last=t;
+ const target=(keys.right?1:0)-(keys.left?1:0);
+ steer=target||steer*.92;
+ if(keys.gas)speed=Math.min(190,speed+75*dt);else speed=Math.max(0,speed-16*dt);
+ if(keys.brake)speed=Math.max(0,speed-125*dt);
+ road+=speed*dt*1.25;dist+=speed*dt/3.6;
+ const horizon=h*.38;
+ let sky=ctx.createLinearGradient(0,0,0,horizon);sky.addColorStop(0,'#397ca7');sky.addColorStop(1,'#d6c7a1');ctx.fillStyle=sky;ctx.fillRect(0,0,w,horizon);
+ // distant mountains and city
+ ctx.fillStyle='#7d8d83';ctx.beginPath();ctx.moveTo(0,horizon+22);for(let x=0;x<=w;x+=45)ctx.lineTo(x,horizon+8+Math.sin(x*.012)*20+Math.cos(x*.027)*10);ctx.lineTo(w,horizon+75);ctx.lineTo(0,horizon+75);ctx.fill();
+ for(let i=0;i<22;i++){let x=(i*97+13)%w, bh=18+(i*31)%52;ctx.fillStyle=i%2?'#78858a':'#687b80';ctx.fillRect(x,horizon+48-bh,22,bh)}
+ ctx.fillStyle='#c5aa78';ctx.fillRect(0,horizon+75,w,h-horizon-75);
+ // road perspective
+ const cx=w/2-steer*38, bottom=h+40;
+ ctx.fillStyle='#383d42';ctx.beginPath();ctx.moveTo(cx-32,horizon+50);ctx.lineTo(cx+32,horizon+50);ctx.lineTo(w*.91,bottom);ctx.lineTo(w*.09,bottom);ctx.fill();
+ ctx.strokeStyle='#f6e8b0';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(cx-29,horizon+52);ctx.lineTo(w*.105,bottom);ctx.moveTo(cx+29,horizon+52);ctx.lineTo(w*.895,bottom);ctx.stroke();
+ // dashed center line
+ ctx.strokeStyle='#f7f2d8';ctx.lineWidth=4;
+ for(let i=0;i<12;i++){let p=((i/12)+(road*.003)%1);let y=horizon+55+(p*p)*(h-horizon+40);let x=cx+(w/2-cx)*p;let len=4+p*25;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+len);ctx.stroke()}
+ // roadside sparse palms / buildings
+ for(let i=0;i<10;i++){let p=((i/10)+(road*.0015)%1);let y=horizon+60+p*p*(h-horizon);let scale=.15+p*1.1;let side=i%2?1:-1;let x=cx+side*(40+p*w*.47);
+ ctx.fillStyle='#66523b';ctx.fillRect(x-3*scale,y-24*scale,6*scale,26*scale);
+ ctx.fillStyle='#315b42';ctx.beginPath();ctx.arc(x,y-27*scale,12*scale,0,Math.PI*2);ctx.fill();
+ }
+ // SUV body
+ const carX=w/2+steer*25, carY=h*.72, s=Math.min(w/360,1.25);
+ ctx.save();ctx.translate(carX,carY);ctx.scale(s,s);
+ ctx.fillStyle='#101820';rounded(-66,4,132,62,18);
+ ctx.fillStyle='#174f79';ctx.beginPath();ctx.moveTo(-57,18);ctx.lineTo(-47,-23);ctx.quadraticCurveTo(-42,-39,-20,-42);ctx.lineTo(27,-42);ctx.quadraticCurveTo(48,-40,54,-19);ctx.lineTo(61,18);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#8db6c9';ctx.beginPath();ctx.moveTo(-39,-23);ctx.lineTo(-27,-36);ctx.lineTo(24,-36);ctx.lineTo(40,-22);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#0d2534';rounded(-29,-32,58,12,4);
+ ctx.fillStyle='#dce9e8';rounded(-51,5,102,8,3);
+ ctx.fillStyle='#f5f0d3';rounded(-53,-3,16,8,3);rounded(37,-3,16,8,3);
+ ctx.fillStyle='#080b0e';rounded(-67,13,14,32,5);rounded(53,13,14,32,5);
+ ctx.fillStyle='#b9c3c9';rounded(-17,9,34,13,3);
+ ctx.restore();
+ document.getElementById('speed').textContent=Math.round(speed)+' KM/H';
+ // small info
+ ctx.fillStyle='#ffffffcc';ctx.font='12px Arial';ctx.fillText('DISTANCE  '+dist.toFixed(1)+' KM',14,h-112);
+ requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+})();
+</script>
+</body></html>
