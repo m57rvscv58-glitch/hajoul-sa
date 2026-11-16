@@ -1,0 +1,260 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>HAJOUL WORLD ULTRA</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;overflow:hidden;background:#080d16;font-family:Arial;color:white}
+canvas{display:block}
+#ui{position:fixed;inset:0;pointer-events:none}
+.top{display:flex;justify-content:space-between;padding:14px;align-items:flex-start}
+.panel{background:#101a29dd;border:1px solid #ffffff30;border-radius:13px;padding:10px 14px}
+.logo{font-weight:900;font-size:20px;letter-spacing:2px;color:#55d9ff}
+#speed{font-size:27px;font-weight:bold}
+button{pointer-events:auto;border:1px solid #ffffff55;background:#132338dd;color:white;border-radius:12px;padding:11px;font-weight:bold}
+button:active{background:#168bc5}
+.tools{position:absolute;top:85px;right:12px;display:grid;gap:7px}
+.controls{position:absolute;bottom:22px;left:0;right:0;display:flex;justify-content:space-between;padding:0 20px}
+.group{display:flex;gap:10px;align-items:end}
+.control{width:67px;height:67px;font-size:23px;background:#10243bdc}
+#gas{width:85px;height:85px;background:#087dba}
+#brake{background:#a52c36}
+#status{font-size:11px;color:#b8d7e8;margin-top:5px}
+</style>
+</head>
+<body>
+<div id="ui">
+ <div class="top">
+  <div class="panel">
+   <div class="logo">HAJOUL WORLD</div>
+   <div id="status">ULTRA CITY • FREE DRIVE</div>
+  </div>
+  <div class="panel" style="text-align:center">
+   <div id="speed">0</div>
+   <small>KM/H</small>
+  </div>
+ </div>
+ <div class="tools">
+  <button id="sun">☀️ Sunny</button>
+  <button id="cloud">☁️ Clouds</button>
+  <button id="rain">🌧 Rain</button>
+  <button id="night">🌙 Night</button>
+  <button id="reset">↻ Reset</button>
+ </div>
+ <div class="controls">
+  <div class="group">
+   <button class="control" id="left">◀</button>
+   <button class="control" id="right">▶</button>
+  </div>
+  <div class="group">
+   <button class="control" id="brake">▼</button>
+   <button class="control" id="gas">▲</button>
+  </div>
+ </div>
+</div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x8cc9ed);
+scene.fog=new THREE.Fog(0x8cc9ed,100,650);
+
+const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,1200);
+camera.position.set(0,5,12);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.15;
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xc7e7ff,0x6b5942,2));
+const sunLight=new THREE.DirectionalLight(0xffedcf,3);
+sunLight.position.set(-80,130,60);
+sunLight.castShadow=true;
+sunLight.shadow.mapSize.set(2048,2048);
+scene.add(sunLight);
+
+const mat=(color,roughness=.8,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
+const groundMat=mat(0xb39b72);
+const roadMat=mat(0x252a31,.95);
+const white=mat(0xffffff);
+const dark=mat(0x10151b,.5);
+const glass= new THREE.MeshStandardMaterial({color:0x17364c,metalness:.4,roughness:.18});
+const yellow=mat(0xffd34e);
+
+function cube(parent,x,y,z,sx,sy,sz,material){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material);
+ m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;
+}
+
+cube(scene,0,-.35,-150,1000,.5,1000,groundMat);
+cube(scene,0,-.04,-150,20,.18,1000,roadMat);
+
+for(let z=30;z>-650;z-=18){
+ cube(scene,0,.06,z,0.22,.03,7,white);
+}
+for(let x of [-10,10]){
+ cube(scene,x,.05,-150,.3,.15,1000,yellow);
+}
+
+const buildings=[];
+for(let z=20;z>-620;z-=28){
+ for(let side of [-1,1]){
+  const h=18+Math.random()*65;
+  const w=10+Math.random()*15;
+  const b=cube(scene,side*(20+Math.random()*20),h/2-.1,z+Math.random()*12,w,h,12+Math.random()*12,
+   mat(new THREE.Color().setHSL(.57+Math.random()*.08,.18,.2+Math.random()*.2)));
+  buildings.push(b);
+  for(let y=4;y<h-3;y+=5){
+   const winMat=new THREE.MeshStandardMaterial({color:0x8ed9ed,emissive:0x173b4c,emissiveIntensity:.35});
+   cube(scene,b.position.x-side*(w/2+.03),y,b.position.z,w>.0? .12:.12,.12,winMat);
+  }
+ }
+}
+
+const car=new THREE.Group();
+scene.add(car);
+car.position.set(0,0,3);
+
+const bodyMat=mat(0x123f83,.32,.65);
+cube(car,0,1.05,0,2.35,1.05,4.4,bodyMat);
+cube(car,0,1.8,-.35,1.9,1.0,2.25,bodyMat);
+cube(car,0,1.84,-.35,1.78,.78,2.1,glass);
+cube(car,0,.63,2.23,2.15,.35,.15,dark);
+cube(car,0,.63,-2.23,2.15,.35,.15,dark);
+for(let x of [-1.2,1.2]){
+ for(let z of [-1.45,1.45]){
+  const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.53,.53,.35,24),dark);
+  wheel.rotation.z=Math.PI/2;
+  wheel.position.set(x,.55,z);
+  wheel.castShadow=true;car.add(wheel);
+  const rim=new THREE.Mesh(new THREE.CylinderGeometry(.25,.25,.37,20),mat(0xbac5ce,.25,.8));
+  rim.rotation.z=Math.PI/2;rim.position.copy(wheel.position);car.add(rim);
+ }
+}
+for(let x of [-.8,.8]){
+ const lamp=cube(car,x,.95,2.23,.48,.3,.08,mat(0xfff4cc,.2));
+ lamp.material.emissive=new THREE.Color(0x665533);
+}
+const tail=mat(0xc51b24,.3);
+for(let x of [-.8,.8])cube(car,x,1,-2.23,.45,.3,.08,tail);
+
+const wheels=[];
+car.traverse(o=>{if(o.geometry?.type==="CylinderGeometry")wheels.push(o)});
+
+const clouds=new THREE.Group();scene.add(clouds);
+for(let i=0;i<35;i++){
+ const g=new THREE.Group();
+ for(let j=0;j<5;j++){
+  const m=new THREE.Mesh(new THREE.SphereGeometry(3+Math.random()*3,12,10),mat(0xe7eff5));
+  m.position.set(j*3,Math.random()*2,Math.random()*3);g.add(m);
+ }
+ g.position.set((Math.random()-.5)*220,35+Math.random()*35,-Math.random()*600);
+ clouds.add(g);
+}
+
+const rainGeo=new THREE.BufferGeometry();
+const rainCount=1000;
+const rainPositions=new Float32Array(rainCount*3);
+for(let i=0;i<rainCount;i++){
+ rainPositions[i*3]=(Math.random()-.5)*90;
+ rainPositions[i*3+1]=Math.random()*60;
+ rainPositions[i*3+2]=(Math.random()-.5)*130;
+}
+rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPositions,3));
+const rain=new THREE.Points(rainGeo,new THREE.PointsMaterial({color:0xcceeff,size:.16,transparent:true,opacity:.7}));
+scene.add(rain);rain.visible=false;
+
+let speed=0,steer=0,weather='sun',night=false;
+const keys={};
+function hold(id,key){
+ const b=document.getElementById(id);
+ b.addEventListener('pointerdown',e=>{e.preventDefault();keys[key]=true});
+ ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>keys[key]=false));
+}
+hold('gas','gas');hold('brake','brake');hold('left','left');hold('right','right');
+
+function setWeather(type){
+ weather=type;
+ rain.visible=type==='rain';
+ clouds.visible=type!=='sun';
+ if(type==='sun'){
+  scene.background.set(0x8cc9ed);scene.fog.color.set(0x8cc9ed);
+  sunLight.intensity=3;
+ }else if(type==='cloud'){
+  scene.background.set(0x71879a);scene.fog.color.set(0x71879a);
+  sunLight.intensity=1.4;
+ }else{
+  scene.background.set(0x35485c);scene.fog.color.set(0x35485c);
+  sunLight.intensity=.8;
+ }
+}
+document.getElementById('sun').onclick=()=>setWeather('sun');
+document.getElementById('cloud').onclick=()=>setWeather('cloud');
+document.getElementById('rain').onclick=()=>setWeather('rain');
+document.getElementById('night').onclick=()=>{
+ night=!night;
+ scene.background.set(night?0x071326:0x8cc9ed);
+ scene.fog.color.set(night?0x071326:0x8cc9ed);
+ sunLight.intensity=night?.15:2;
+};
+document.getElementById('reset').onclick=()=>{
+ car.position.set(0,0,3);car.rotation.y=0;speed=0;
+};
+
+const clock=new THREE.Clock();
+function animate(){
+ requestAnimationFrame(animate);
+ const dt=Math.min(clock.getDelta(),.04);
+
+ if(keys.gas)speed=Math.min(speed+24*dt,65);
+ else speed=Math.max(0,speed-8*dt);
+ if(keys.brake)speed=Math.max(0,speed-45*dt);
+
+ const turn=(keys.left?1:0)-(keys.right?1:0);
+ if(speed>1){
+  car.rotation.y+=turn*dt*(.9+speed/60);
+  car.position.x+=Math.sin(car.rotation.y)*speed*dt*.45;
+  car.position.z-=Math.cos(car.rotation.y)*speed*dt*.45;
+ }
+ car.position.x=THREE.MathUtils.clamp(car.position.x,-7,7);
+
+ wheels.forEach(w=>w.rotation.x-=speed*dt*.08);
+
+ const desired=new THREE.Vector3(
+  car.position.x-Math.sin(car.rotation.y)*10,
+  5.2,
+  car.position.z+Math.cos(car.rotation.y)*10
+ );
+ camera.position.lerp(desired,1-Math.exp(-4*dt));
+ camera.lookAt(car.position.x,1.2,car.position.z-3);
+
+ const p=rainGeo.attributes.position.array;
+ if(rain.visible){
+  for(let i=0;i<rainCount;i++){
+   p[i*3+1]-=35*dt;
+   if(p[i*3+1]<0)p[i*3+1]=60;
+   p[i*3+2]+=speed*dt*.3;
+  }
+  rainGeo.attributes.position.needsUpdate=true;
+ }
+ document.getElementById('speed').textContent=Math.round(speed*3.6);
+ renderer.render(scene,camera);
+}
+animate();
+
+addEventListener('resize',()=>{
+ camera.aspect=innerWidth/innerHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+</body>
+</html>
