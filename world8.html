@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>HAJOUL WORLD 8.0 — EXTREME EDITION</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07121c;color:#fff;font-family:Arial,system-ui;touch-action:none}canvas{display:block}
+#ui{position:fixed;inset:0;pointer-events:none}.top{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.logo{font-size:18px;font-weight:1000;letter-spacing:1.4px;text-shadow:0 2px 10px #000}.sub{font-size:9px;letter-spacing:2px;color:#c6e9f4}.glass{background:#071522c9;border:1px solid #ffffff45;border-radius:12px;padding:8px 11px;backdrop-filter:blur(10px);font-size:12px}
+#stats{position:absolute;right:12px;top:62px;display:flex;gap:6px;flex-direction:column;text-align:right}#toolbar{position:absolute;left:12px;top:62px;display:flex;gap:6px;pointer-events:auto;flex-wrap:wrap;max-width:70%}
+button{color:#fff;background:#071522dc;border:1px solid #ffffff60;border-radius:11px;padding:9px 11px;font-size:10px;font-weight:900;touch-action:none}
+#notice{position:absolute;left:12px;bottom:100px;font-size:10px;text-shadow:0 2px 5px #000;background:#0715229c;padding:7px 9px;border-radius:9px}
+.controls{position:absolute;bottom:13px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:end}.steer,.pedals{display:flex;gap:7px;pointer-events:auto}.steer button{width:60px;height:60px;font-size:23px}.pedals button{height:62px;min-width:57px}.gas{background:#08784fdc}.brake{background:#a12a32dc}.drift{background:#76501fdd}
+#minimap{position:absolute;right:12px;bottom:104px;width:108px;height:108px;border:1px solid #ffffff65;border-radius:50%;background:#0c1d22b8}
+@media(min-width:800px){.steer button{width:72px;height:72px}.pedals button{height:70px;min-width:70px}}
+</style></head><body>
+<div id="ui">
+ <div class="top"><div><div class="logo">HAJOUL WORLD <span style="color:#7effd1">8.0</span></div><div class="sub">EXTREME OPEN WORLD • PROTOTYPE</div></div><div class="glass" id="speed">0 KM/H</div></div>
+ <div id="toolbar"><button id="cam">CAMERA</button><button id="weather">WEATHER: CLEAR</button><button id="time">TIME: DAY</button><button id="quality">QUALITY: ULTRA</button></div>
+ <div id="stats"><div class="glass" id="fuel">FUEL 100%</div><div class="glass" id="mission">FREE ROAM</div></div>
+ <div id="notice">Drag screen to look • ◀ ▶ steer • GAS accelerate • DRIFT handbrake</div>
+ <canvas id="minimap" width="108" height="108"></canvas>
+ <div class="controls"><div class="steer"><button data-k="left">◀</button><button data-k="right">▶</button></div><div class="pedals"><button class="drift" data-k="drift">DRIFT</button><button class="brake" data-k="brake">BRAKE</button><button class="gas" data-k="gas">GAS ▲</button></div></div>
+</div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x8eb8d1);scene.fog=new THREE.Fog(0x8eb8d1,120,950);
+const camera=new THREE.PerspectiveCamera(63,innerWidth/innerHeight,.1,2200);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;document.body.appendChild(renderer.domElement);
+const hemi=new THREE.HemisphereLight(0xc9eaff,0x6d5437,1.8);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xffe2b8,3.3);sun.position.set(-120,180,100);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-180;sun.shadow.camera.right=180;sun.shadow.camera.top=180;sun.shadow.camera.bottom=-180;scene.add(sun);
+const mat=(c,r=.8,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
+const M={sand:mat(0xb99b6b),road:mat(0x252a30,.94),edge:mat(0xe6ddc2),white:mat(0xf6f0d9),blue:mat(0x125080,.28,.62),glass:new THREE.MeshPhysicalMaterial({color:0x18394b,roughness:.14,metalness:.35,clearcoat:1}),rubber:mat(0x090c10),chrome:mat(0xbac7ce,.2,.85),dark:mat(0x10171d),grass:mat(0x526c3e),building:[mat(0x76848b),mat(0x9daba8),mat(0x5d6e7b),mat(0xb3a58e)]};
+function mesh(g,m,p,x,y,z){let o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;p.add(o);return o}
+function box(p,x,y,z,a,b,c,m){return mesh(new THREE.BoxGeometry(a,b,c),m,p,x,y,z)}
+function cyl(p,x,y,z,r1,r2,h,m){let o=mesh(new THREE.CylinderGeometry(r1,r2,h,20),m,p,x,y,z);return o}
+const ground=mesh(new THREE.PlaneGeometry(2400,2400),M.sand,scene,0,-.2,0);ground.rotation.x=-Math.PI/2;
+box(scene,0,-.08,0,26,.16,1800,M.road);
+for(let s of [-1,1]){box(scene,s*13,.01,0,.38,.12,1800,M.edge);box(scene,s*17,-.02,0,7,.08,1800,mat(0xa98b5f))}
+for(let z=-880;z<900;z+=24)box(scene,0,.015,z,.22,.035,10,M.white);
+// Urban skyline far away: grouped distant districts, not roadside clutter
+for(let i=0;i<75;i++){let side=i%2?1:-1,x=side*(115+(i%9)*19),z=-650+Math.floor(i/2)*18+(i%4)*10,h=20+(i*29%115),w=13+(i*13%24),d=13+(i*17%25);let b=box(scene,x,h/2,z,w,h,d,M.building[i%4]);if(i%5===0){for(let yy=5;yy<h-4;yy+=8)for(let xx=-w/2+3;xx<w/2-2;xx+=5)box(scene,x+xx,yy,z+d/2+.02,1.1,2,.04,mat(0x9fc2c9,.25,.2))}}
+for(let i=0;i<55;i++){let side=i%2?1:-1,x=side*(120+Math.random()*340),z=-850+Math.random()*1700;let hill=mesh(new THREE.DodecahedronGeometry(1,2),mat(i%2?0x776448:0x8c7959),scene,x,15+Math.random()*20,z);hill.scale.set(35+Math.random()*85,25+Math.random()*35,60+Math.random()*110)}
+// roadside vegetation
+for(let i=0;i<180;i++){let side=i%2?1:-1,z=-850+Math.random()*1700,x=side*(27+Math.random()*62);cyl(scene,x,1.7,z,.28,.42,3.4,mat(0x60452d));let crown=mesh(new THREE.SphereGeometry(1.8,8,6),M.grass,scene,x,3.7,z);crown.scale.set(1.5,.5,1.2)}
+// service station and camp, set back from highway
+const station= new THREE.Group();scene.add(station);station.position.set(-62,0,-130);
+box(station,0,4,0,25,1,15,mat(0xe5e1d3));for(let x of [-9,9])box(station,x,2,0,.8,4,.8,mat(0xddd5c2));
+box(station,0,1.3,-11,20,2,7,mat(0x9c4030));box(station,0,2.6,-11,19,.25,6,mat(0xe9d8b7));
+for(let x of [-5,5]){box(station,x,1,7,2,2,1,mat(0xd8d9d3));box(station,x,2.2,7,2,.25,1,mat(0x235b7b))}
+const camp=new THREE.Group();scene.add(camp);camp.position.set(68,0,95);box(camp,0,.8,0,6,1.6,4,mat(0x806045));let tent=mesh(new THREE.ConeGeometry(3.5,3,4),mat(0xb68b58),camp,0,2,5);tent.rotation.y=Math.PI/4;let firelight=new THREE.PointLight(0xff7624,5,35);firelight.position.set(0,1,11);camp.add(firelight);mesh(new THREE.ConeGeometry(.65,1.8,8),new THREE.MeshBasicMaterial({color:0xff8c27}),camp,0,1,11);
+// Detailed Patrol-inspired SUV (custom procedural model)
+const car=new THREE.Group();scene.add(car);
+box(car,0,1.12,0,2.35,.92,4.8,M.blue);box(car,0,1.85,-.15,2.04,1.0,2.75,M.blue);
+box(car,0,1.93,.02,1.88,.75,2.48,M.glass);box(car,0,1.42,2.42,1.92,.38,.1,M.chrome);box(car,0,1.42,2.49,1.08,.3,.05,M.dark);
+for(let x=-.78;x<=.8;x+=.26)box(car,x,1.43,2.53,.045,.27,.045,M.chrome);
+for(let x of [-.88,.88]){box(car,x,1.48,2.46,.43,.26,.12,M.white);box(car,x,1.22,-2.38,.43,.23,.1,mat(0xb82026))}
+box(car,0,.65,-.1,2.4,.24,4.65,M.dark);box(car,0,.83,2.4,1.8,.22,.22,M.chrome);
+for(let x of [-1.18,1.18]){box(car,x,1.85,-.2,.13,.25,.5,M.chrome);box(car,x*1.1,2.05,-.2,.16,.14,.2,M.dark)}
+box(car,0,2.43,-.2,1.5,.1,2.1,M.dark);
+for(let x of [-.82,.82])for(let z of [-1.58,1.58]){let pivot=new THREE.Group();pivot.position.set(x,.7,z);car.add(pivot);mesh(new THREE.CylinderGeometry(.55,.55,.38,32),M.rubber,pivot,0,0,0).rotation.z=Math.PI/2;mesh(new THREE.CylinderGeometry(.32,.32,.4,28),M.chrome,pivot,0,0,0).rotation.z=Math.PI/2;mesh(new THREE.CylinderGeometry(.12,.12,.42,18),M.dark,pivot,0,0,0).rotation.z=Math.PI/2;for(let j=0;j<8;j++){let a=j*Math.PI/4;let spoke=box(pivot,Math.cos(a)*.2,Math.sin(a)*.2,0,.055,.34,.42,M.dark);spoke.rotation.z=a}}
+// mirrors and roof rails
+for(let x of [-1.13,1.13]){box(car,x,1.95,.55,.22,.16,.3,M.dark);box(car,x,2.35,-.1,.06,.06,2.1,M.chrome)}
+// shadow
+let carShadow=mesh(new THREE.CircleGeometry(2.7,32),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.24}),car,0,.02,0);carShadow.rotation.x=-Math.PI/2;
+car.position.set(0,0,24);
+// traffic vehicles on service lanes
+const traffic=[];for(let i=0;i<12;i++){let g=new THREE.Group();box(g,0,.75,0,1.9,.85,3.4,mat([0xc7cdd0,0x842d2d,0x182b3d,0xb9a37d][i%4]));box(g,0,1.25,-.15,1.5,.42,1.7,M.glass);g.position.set(i%2?34:-34,0,-650+i*115);scene.add(g);traffic.push(g)}
+// drift smoke particle pool
+const smoke=[];const smokeMat=new THREE.MeshBasicMaterial({color:0xcbd0d0,transparent:true,opacity:.24,depthWrite:false});
+for(let i=0;i<36;i++){let s=mesh(new THREE.SphereGeometry(1,8,8),smokeMat,scene,0,-100,0);s.visible=false;smoke.push({m:s,life:0})}
+let smokeIndex=0;
+const keys={};document.querySelectorAll('[data-k]').forEach(b=>{let k=b.dataset.k;b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;b.setPointerCapture(e.pointerId)});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});
+let yaw=0,speed=0,camMode=0,weather=0,night=false,quality=2,steerVisual=0,fuel=100,smokeTimer=0;
+document.getElementById('cam').onclick=()=>camMode=(camMode+1)%3;
+document.getElementById('weather').onclick=()=>{weather=(weather+1)%3;let names=['CLEAR','RAIN','FOG'];document.getElementById('weather').textContent='WEATHER: '+names[weather];scene.fog.density=0;scene.fog.near=weather===2?35:120;scene.fog.far=weather===2?330:950;scene.fog.color.set(weather===1?0x596b79:weather===2?0x9a9c96:night?0x07111f:0x8eb8d1);scene.background.set(weather===1?0x596b79:weather===2?0x9a9c96:night?0x07111f:0x8eb8d1)};
+document.getElementById('time').onclick=()=>{night=!night;document.getElementById('time').textContent='TIME: '+(night?'NIGHT':'DAY');scene.background.set(night?0x07111f:0x8eb8d1);scene.fog.color.set(night?0x07111f:0x8eb8d1);sun.intensity=night?.35:3.3;hemi.intensity=night?.35:1.8;sun.color.set(night?0x7897ff:0xffe2b8);});
+document.getElementById('quality').onclick=()=>{quality=(quality+1)%3;let q=['HIGH','ULTRA','MAX'];document.getElementById('quality').textContent='QUALITY: '+q[quality];renderer.setPixelRatio(Math.min(devicePixelRatio,[1,1.5,2][quality]))};
+let dragging=false,prevX=0;renderer.domElement.addEventListener('pointerdown',e=>{dragging=true;prevX=e.clientX});renderer.domElement.addEventListener('pointermove',e=>{if(dragging){yaw-= (e.clientX-prevX)*.002;prevX=e.clientX}});renderer.domElement.addEventListener('pointerup',()=>dragging=false);renderer.domElement.addEventListener('pointercancel',()=>dragging=false);
+const mini=document.getElementById('minimap').getContext('2d');
+const clock=new THREE.Clock();let elapsed=0;
+function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
+let steer=(keys.right?1:0)-(keys.left?1:0);steerVisual=THREE.MathUtils.lerp(steerVisual,steer,.15);
+if(keys.gas&&fuel>0){speed=Math.min(62,speed+25*dt);fuel=Math.max(0,fuel-.018*dt*Math.max(speed,8))}else speed*=Math.pow(.991,dt*60);
+if(keys.brake)speed=Math.max(-7,speed-42*dt);
+let drifting=keys.drift&&Math.abs(speed)>7;yaw+=steer*(.48+Math.abs(speed)*.021)*dt*(drifting?1.65:1)*(speed<0?-1:1);
+let forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));car.position.addScaledVector(forward,speed*dt);car.rotation.y=yaw;car.position.x=THREE.MathUtils.clamp(car.position.x,-260,260);
+if(drifting){smokeTimer+=dt;if(smokeTimer>.07){smokeTimer=0;for(let side of [-1,1]){let p=car.localToWorld(new THREE.Vector3(side*1.05,.35,-1.7));let q=smoke[smokeIndex++%smoke.length];q.m.position.copy(p);q.m.scale.setScalar(.18);q.m.visible=true;q.life=1.3}}}
+for(let q of smoke){if(q.life>0){q.life-=dt;q.m.position.y+=dt*.7;q.m.scale.multiplyScalar(1+dt*1.4);q.m.material=smokeMat;q.m.visible=q.life>0}}
+traffic.forEach((g,i)=>{g.position.z+=Math.sin(elapsed*.18+i)*.035});
+let target=new THREE.Vector3(car.position.x-forward.x*(camMode===1?16:camMode===2?-7:10),camMode===1?8:camMode===2?3.5:5.2,car.position.z-forward.z*(camMode===1?16:camMode===2?-7:10));camera.position.lerp(target,1-Math.pow(.001,dt));camera.lookAt(car.position.x,1.35,car.position.z+forward.z*2);
+document.getElementById('speed').textContent=Math.round(Math.abs(speed)*3.6)+' KM/H';document.getElementById('fuel').textContent='FUEL '+Math.round(fuel)+'%';
+mini.clearRect(0,0,108,108);mini.fillStyle='#1b3835';mini.beginPath();mini.arc(54,54,53,0,Math.PI*2);mini.fill();mini.strokeStyle='#e9e3c5';mini.lineWidth=8;mini.beginPath();mini.moveTo(54,0);mini.lineTo(54,108);mini.stroke();mini.fillStyle='#62ffcc';mini.beginPath();mini.arc(54,54,4,0,Math.PI*2);mini.fill();
+renderer.render(scene,camera)}
+animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,[1,1.5,2][quality]))});
+</script></body></html>
