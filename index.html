@@ -1,154 +1,105 @@
-<!doctype html>
-<html lang="ar" dir="rtl">
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#101820">
-<title>هجول على كيفك</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>HAJOUL WORLD</title>
 <style>
-:root{color-scheme:dark}
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101820;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif;overscroll-behavior:none}
-button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-#game{position:fixed;inset:0;width:100%;height:100%;display:block}
-#hud{position:fixed;z-index:2;top:calc(env(safe-area-inset-top) + 10px);left:12px;right:12px;display:none;justify-content:space-between;pointer-events:none}
-.pill{background:#071018dc;border:1px solid #ffffff35;border-radius:14px;padding:9px 13px;font-weight:800}
-#controls{position:fixed;z-index:3;bottom:calc(env(safe-area-inset-bottom) + 14px);left:0;right:0;display:none;justify-content:space-between;padding:0 18px;pointer-events:none}
-.pad{display:flex;gap:12px;pointer-events:auto}
-.ctrl{width:68px;height:68px;border-radius:50%;border:2px solid #ffffff90;background:#071018e8;color:#fff;font-size:27px;font-weight:900;box-shadow:0 5px 18px #0008;touch-action:none;user-select:none}
-.ctrl:active,.ctrl.down{background:#f07822;color:#111}
-#screen{position:fixed;z-index:5;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;background:linear-gradient(145deg,#0c1720f5,#172b36f5);padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 22px);display:flex;align-items:flex-start;justify-content:center}
-.panel{width:min(520px,100%);margin:auto;background:#172630;border:1px solid #ffffff25;border-radius:24px;padding:20px;box-shadow:0 18px 55px #0009}
-h1{margin:0;color:#ff9b42;font-size:30px;text-align:center}
-.sub{text-align:center;color:#c8d5dc;margin:5px 0 16px;font-size:14px}
-.section-title{font-weight:900;margin:14px 0 9px}
-.car-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-.car-choice{min-height:58px;border:1px solid #ffffff30;border-radius:13px;background:#0d1921;color:#fff;padding:10px 8px;font-weight:800;text-align:center}
-.car-choice.selected,.year-choice.selected{border:2px solid #ff8b2b;background:#49301f}
-.years{display:flex;flex-wrap:wrap;gap:8px}
-.year-choice{border:1px solid #ffffff35;background:#0d1921;color:#fff;border-radius:11px;padding:10px 14px;min-width:65px}
-.colors{display:flex;gap:10px;flex-wrap:wrap}
-.color-choice{width:34px;height:34px;border-radius:50%;border:3px solid #ffffff50;box-shadow:0 2px 7px #0008}
-.color-choice.selected{outline:3px solid #ff9b42;outline-offset:3px}
-.preview{height:115px;border-radius:16px;background:linear-gradient(#354a52,#18252c);margin:15px 0;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-.preview:before,.preview:after{content:"";position:absolute;top:-10px;bottom:-10px;width:5px;background:#eee9;transform:rotate(8deg)}
-.preview:before{left:18%}.preview:after{right:18%}
-.car-icon{font-size:66px;filter:drop-shadow(0 8px 5px #0009);z-index:1}
-.start{width:100%;border:0;border-radius:15px;padding:15px;background:#ff8528;color:#15100c;font-weight:950;font-size:19px;margin-top:12px;box-shadow:0 5px 0 #a84a0d}
-.start:active{transform:translateY(2px);box-shadow:0 3px 0 #a84a0d}
-.hint{text-align:center;color:#aebdc5;font-size:12px;line-height:1.6;margin:12px 0 0}
-#toast{position:fixed;z-index:9;bottom:20px;left:50%;transform:translateX(-50%);background:#071018ed;padding:10px 15px;border-radius:12px;display:none;max-width:90%;text-align:center}
-@media(max-height:700px){.panel{padding:15px}.car-choice{min-height:48px}.preview{height:85px}.car-icon{font-size:52px}}
+body{margin:0;background:#07111d;color:white;font-family:Arial,sans-serif;text-align:center}
+header{padding:18px;background:#101e30}
+h1{margin:0;color:#38d9ff;letter-spacing:3px}
+#stats{display:flex;justify-content:space-around;padding:12px;background:#17283b;font-weight:bold}
+canvas{display:block;width:100%;height:52vh;background:#182b25;touch-action:none}
+.panel{padding:12px}
+select,button{padding:12px;border:0;border-radius:10px;font-size:16px;margin:5px}
+button{background:#13bce5;color:#001522;font-weight:bold}
+#controls{display:flex;justify-content:center;gap:15px;padding:12px}
+#controls button{width:90px;height:65px;font-size:25px}
+small{color:#9cb4c9}
 </style>
 </head>
 <body>
+<header>
+<h1>HAJOUL WORLD</h1>
+<small>DRIVE • DRIFT • EXPLORE</small>
+</header>
+<div id="stats">
+<span>Speed: <b id="speed">0</b> km/h</span>
+<span>Fuel: <b id="fuel">100</b>%</span>
+</div>
+<div class="panel">
+<select id="car">
+<option value="Patrol">Nissan Patrol</option>
+<option value="Hilux">Toyota Hilux</option>
+<option value="Sonata">Hyundai Sonata</option>
+<option value="Accent">Hyundai Accent</option>
+<option value="Cybertruck">Tesla Cybertruck</option>
+<option value="Model S">Tesla Model S Plaid</option>
+<option value="GT-R">Nissan GT-R</option>
+<option value="Porsche">Porsche 911</option>
+<option value="Lamborghini">Lamborghini</option>
+<option value="Ferrari">Ferrari</option>
+</select>
+<button onclick="refuel()">⛽ REFUEL</button>
+</div>
 <canvas id="game"></canvas>
-<div id="hud"><div class="pill">هجول على كيفك 🏁</div><div class="pill">النقاط: <span id="score">0</span></div></div>
 <div id="controls">
- <div class="pad"><button class="ctrl" id="left" aria-label="يسار">◀</button><button class="ctrl" id="right" aria-label="يمين">▶</button></div>
- <div class="pad"><button class="ctrl" id="brake" aria-label="فرامل">▼</button><button class="ctrl" id="gas" aria-label="دعس">▲</button></div>
+<button id="left">⬅️</button>
+<button id="gas">🚀</button>
+<button id="right">➡️</button>
 </div>
-<div id="screen">
- <div class="panel">
-  <h1 id="heading">هجول على كيفك 🏎️</h1>
-  <p class="sub" id="intro">اختر سيارتك وموديلها ولونها، وبعدها ابدأ اللعب</p>
-  <div class="section-title">1. اختر السيارة</div>
-  <div class="car-grid" id="carGrid"></div>
-  <div class="section-title">2. اختر الموديل</div>
-  <div class="years" id="yearGrid"></div>
-  <div class="section-title">3. اختر اللون</div>
-  <div class="colors" id="colorGrid"></div>
-  <div class="preview"><div class="car-icon" id="carIcon">🚙</div></div>
-  <button class="start" id="start" type="button">ابدأ اللعب</button>
-  <p class="hint">نسخة تجريبية مجانية. اسحب على الطريق أو استخدم أزرار القيادة أسفل الشاشة.</p>
- </div>
-</div>
-<div id="toast"></div>
+<button onclick="start()">START GAME</button>
+<p id="message">Choose your car and start driving!</p>
 <script>
-(function(){
-"use strict";
-const cars=[
- {name:"تويوتا شاص",icon:"🛻",years:["1990","1995","2000","2005","2010","2015","2020","2025"]},
- {name:"هيونداي سوناتا",icon:"🚘",years:["2005","2010","2015","2020","2024","2025"]},
- {name:"هيونداي أكسنت",icon:"🚗",years:["2006","2012","2017","2022","2025"]},
- {name:"جيب لاندكروزر",icon:"🚙",years:["1998","2005","2010","2016","2022","2025"]},
- {name:"تويوتا هايلكس",icon:"🛻",years:["1998","2005","2010","2015","2022","2025"]},
- {name:"تويوتا كامري",icon:"🚘",years:["2002","2007","2012","2018","2025"]},
- {name:"تويوتا كورولا",icon:"🚗",years:["2003","2008","2014","2020","2025"]},
- {name:"نيسان باترول",icon:"🚙",years:["1998","2010","2017","2025"]},
- {name:"نيسان ددسن",icon:"🛻",years:["1990","2000","2010","2015"]},
- {name:"هيونداي إلنترا",icon:"🚘",years:["2007","2012","2017","2021","2025"]},
- {name:"شفروليه كابرس",icon:"🚘",years:["1996","2006","2013"]},
- {name:"شفروليه لومينا",icon:"🚗",years:["1999","2005"]},
- {name:"فورد كراون فكتوريا",icon:"🚘",years:["1998","2005","2011"]},
- {name:"جيب ربع",icon:"🚙",years:["1990","2000","2010","2020"]},
- {name:"هيونداي أزيرا",icon:"🚘",years:["2008","2012","2018","2023"]}
-];
-const colors=[{name:"برتقالي",hex:"#f07822"},{name:"أبيض",hex:"#f2f2ed"},{name:"أسود",hex:"#171b20"},{name:"أحمر",hex:"#b91f28"},{name:"أزرق",hex:"#254e91"},{name:"فضي",hex:"#a5a8a8"},{name:"ذهبي",hex:"#b6a06a"}];
-let carIndex=0,year="2025",color=colors[0].hex,playing=false,score=0,speed=5,road=0,x=innerWidth/2,steer=0,obstacles=[],spawn=0,last=0;
-const $=id=>document.getElementById(id);
-const screen=$("screen"),canvas=$("game"),ctx=canvas.getContext("2d"),keys={};
-function toast(msg){const t=$("toast");t.textContent=msg;t.style.display="block";setTimeout(()=>t.style.display="none",1900)}
-function renderCars(){
- const grid=$("carGrid");grid.innerHTML="";
- cars.forEach((c,i)=>{const b=document.createElement("button");b.type="button";b.className="car-choice"+(i===carIndex?" selected":"");b.textContent=c.icon+" "+c.name;b.addEventListener("click",()=>{carIndex=i;year=cars[i].years[cars[i].years.length-1];renderCars();renderYears();updatePreview()});grid.appendChild(b)});
+const c=document.getElementById('game'),ctx=c.getContext('2d');
+let speed=0,fuel=100,x=0,playing=false,turn=0;
+function resize(){
+c.width=c.clientWidth*devicePixelRatio;
+c.height=c.clientHeight*devicePixelRatio;
+ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
 }
-function renderYears(){
- const grid=$("yearGrid");grid.innerHTML="";
- cars[carIndex].years.forEach(y=>{const b=document.createElement("button");b.type="button";b.className="year-choice"+(y===year?" selected":"");b.textContent=y;b.addEventListener("click",()=>{year=y;renderYears();updatePreview()});grid.appendChild(b)});
+resize();window.addEventListener('resize',resize);
+function start(){playing=true;document.getElementById('message').textContent='Enjoy the ride!';}
+function refuel(){fuel=100;document.getElementById('fuel').textContent='100';}
+function hold(id,fn){
+let b=document.getElementById(id);
+b.addEventListener('pointerdown',e=>{e.preventDefault();fn(true)});
+['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>fn(false)));
 }
-function renderColors(){
- const grid=$("colorGrid");grid.innerHTML="";
- colors.forEach(c=>{const b=document.createElement("button");b.type="button";b.className="color-choice"+(c.hex===color?" selected":"");b.style.background=c.hex;b.title=c.name;b.setAttribute("aria-label",c.name);b.addEventListener("click",()=>{color=c.hex;renderColors()});grid.appendChild(b)});
-}
-function updatePreview(){$("carIcon").textContent=cars[carIndex].icon;$("carIcon").style.filter="drop-shadow(0 8px 5px #0009)";$("carIcon").style.color=color}
-renderCars();renderYears();renderColors();updatePreview();
-
-function resize(){const d=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.floor(innerWidth*d);canvas.height=Math.floor(innerHeight*d);canvas.style.width=innerWidth+"px";canvas.style.height=innerHeight+"px";ctx.setTransform(d,0,0,d,0,0);if(!playing)x=innerWidth/2;draw()}
-window.addEventListener("resize",resize);
-function rr(a,b,c,d,r,col){ctx.fillStyle=col;ctx.beginPath();const rad=Math.min(r,c/2,d/2);ctx.moveTo(a+rad,b);ctx.arcTo(a+c,b,a+c,b+d,rad);ctx.arcTo(a+c,b+d,a,b+d,rad);ctx.arcTo(a,b+d,a,b,rad);ctx.arcTo(a,b,a+c,b,rad);ctx.closePath();ctx.fill()}
-function drawCar(cx,cy){
- const bw=cars[carIndex].name.includes("شاص")||cars[carIndex].name.includes("هايلكس")||cars[carIndex].name.includes("ددسن")?43:37,bh=64;
- ctx.save();ctx.translate(cx,cy);ctx.rotate(steer*.10);
- rr(-bw/2-5,-bh/2+7,bw+10,bh,9,"#0008");
- [-1,1].forEach(s=>{rr(s*(bw/2-2)-4,-bh/2+8,8,17,3,"#111");rr(s*(bw/2-2)-4,bh/2-25,8,17,3,"#111")});
- rr(-bw/2,-bh/2,bw,bh,8,color);
- rr(-bw/2+5,-bh/2+8,bw-10,19,5,"#a9d8e8");
- rr(-bw/2+5,1,bw-10,17,4,"#7898a5");
- ctx.fillStyle="#fff4ca";ctx.fillRect(-bw/2+4,-bh/2+2,8,4);ctx.fillRect(bw/2-12,-bh/2+2,8,4);
- ctx.fillStyle="#df4438";ctx.fillRect(-bw/2+4,bh/2-5,8,4);ctx.fillRect(bw/2-12,bh/2-5,8,4);
- ctx.restore();
-}
+let gas=false,left=false,right=false;
+hold('gas',v=>gas=v);
+hold('left',v=>left=v);
+hold('right',v=>right=v);
 function draw(){
- const w=innerWidth,h=innerHeight;ctx.clearRect(0,0,w,h);ctx.fillStyle="#315b36";ctx.fillRect(0,0,w,h);
- for(let i=0;i<18;i++){let yy=((i*97+road*1.7)%(h+30))-15;ctx.fillStyle=i%2?"#3e7042":"#294f31";ctx.fillRect(0,yy,w,2)}
- const rw=Math.min(w*.76,520),rx=(w-rw)/2;ctx.fillStyle="#45494c";ctx.fillRect(rx,0,rw,h);
- ctx.fillStyle="#f1e5c9";ctx.fillRect(rx+8,0,5,h);ctx.fillRect(rx+rw-13,0,5,h);
- ctx.fillStyle="#d6d9d7";for(let yy=-50+(road%90);yy<h;yy+=90)ctx.fillRect(w/2-3,yy,6,45);
- obstacles.forEach(o=>{rr(o.x-17,o.y-17,34,34,7,"#f3c541");ctx.fillStyle="#5c4010";ctx.fillRect(o.x-11,o.y-3,22,6)});
- drawCar(x,h*.76);
+let w=c.clientWidth,h=c.clientHeight;
+ctx.clearRect(0,0,w,h);
+ctx.fillStyle='#24452e';ctx.fillRect(0,0,w,h);
+ctx.fillStyle='#343b45';ctx.beginPath();
+ctx.moveTo(w*.25,0);ctx.lineTo(w*.75,0);ctx.lineTo(w*.95,h);ctx.lineTo(w*.05,h);ctx.fill();
+ctx.strokeStyle='#eee';ctx.setLineDash([25,25]);ctx.lineWidth=4;
+ctx.beginPath();ctx.moveTo(w/2,0);ctx.lineTo(w/2,h);ctx.stroke();ctx.setLineDash([]);
+let car=document.getElementById('car').value;
+ctx.save();ctx.translate(w/2+x,h*.72);
+ctx.fillStyle='#111';ctx.fillRect(-24,-44,48,90);
+ctx.fillStyle='#18bce8';ctx.fillRect(-19,-42,38,75);
+ctx.fillStyle='#aeeaff';ctx.fillRect(-15,-32,30,18);
+ctx.fillStyle='#ffdf68';ctx.fillRect(-16,25,10,7);ctx.fillRect(6,25,10,7);
+ctx.fillStyle='white';ctx.font='bold 12px Arial';ctx.textAlign='center';ctx.fillText(car,0,52);
+ctx.restore();
+if(playing){
+if(gas&&fuel>0){speed=Math.min(240,speed+1.1);fuel=Math.max(0,fuel-.025);}
+else speed=Math.max(0,speed-.5);
+if(left)x=Math.max(-w*.2,x-3);
+if(right)x=Math.min(w*.2,x+3);
 }
-function reset(){score=0;speed=5;road=0;x=innerWidth/2;steer=0;obstacles=[];spawn=0;$("score").textContent="0"}
-function endGame(){playing=false;$("hud").style.display="none";$("controls").style.display="none";screen.style.display="flex";$("heading").textContent="اصطدمت!";$("intro").innerHTML="سيارتك: <b>"+cars[carIndex].name+" موديل "+year+"</b><br>جمعت <b>"+score+"</b> نقطة";$("start").textContent="العب من جديد"}
-function frame(t){if(!playing)return;let dt=Math.min((t-last)/16.67||1,2);last=t;
- const w=innerWidth,h=innerHeight,rw=Math.min(w*.76,520),rx=(w-rw)/2;
- let dir=(keys.left?-1:0)+(keys.right?1:0);if(dir)steer=Math.max(-1,Math.min(1,steer+dir*.12*dt));else steer*=.88;
- speed=Math.max(2.5,Math.min(11,speed+((keys.gas?0.13:0)-(keys.brake?0.2:0)-.015)*dt));
- x=Math.max(rx+28,Math.min(rx+rw-28,x+steer*6.2*dt));road+=speed*dt;score+=Math.max(0,Math.round(speed*dt/3));$("score").textContent=score;
- spawn+=dt;if(spawn>Math.max(28,75-speed*3)){spawn=0;obstacles.push({x:rx+45+Math.random()*(rw-90),y:-30})}
- obstacles.forEach(o=>o.y+=speed*dt);obstacles=obstacles.filter(o=>o.y<h+40);
- for(const o of obstacles){if(Math.abs(o.x-x)<31&&Math.abs(o.y-h*.76)<42){endGame();return}}
- draw();requestAnimationFrame(frame);
+document.getElementById('speed').textContent=Math.round(speed);
+document.getElementById('fuel').textContent=Math.round(fuel);
+if(fuel===0){document.getElementById('message').textContent='Out of fuel! Refuel to continue.';playing=false;}
+requestAnimationFrame(draw);
 }
-function startGame(e){if(e){e.preventDefault()}if(playing)return;playing=true;screen.style.display="none";$("hud").style.display="flex";$("controls").style.display="flex";$("heading").textContent="هجول على كيفك 🏎️";reset();last=performance.now();draw();requestAnimationFrame(frame)}
-$("start").addEventListener("click",startGame);
-function bind(id,key){const b=$(id);const down=e=>{if(e.cancelable)e.preventDefault();keys[key]=true;b.classList.add("down")};const up=e=>{keys[key]=false;b.classList.remove("down")};b.addEventListener("pointerdown",down);b.addEventListener("pointerup",up);b.addEventListener("pointercancel",up);b.addEventListener("lostpointercapture",up);b.addEventListener("contextmenu",e=>e.preventDefault())}
-bind("left","left");bind("right","right");bind("gas","gas");bind("brake","brake");
-window.addEventListener("keydown",e=>{if(e.key==="ArrowLeft")keys.left=true;if(e.key==="ArrowRight")keys.right=true;if(e.key==="ArrowUp")keys.gas=true;if(e.key==="ArrowDown")keys.brake=true});
-window.addEventListener("keyup",e=>{if(e.key==="ArrowLeft")keys.left=false;if(e.key==="ArrowRight")keys.right=false;if(e.key==="ArrowUp")keys.gas=false;if(e.key==="ArrowDown")keys.brake=false});
-let touchX=null;canvas.addEventListener("pointerdown",e=>{if(!playing)return;touchX=e.clientX});canvas.addEventListener("pointermove",e=>{if(touchX!==null){const dx=e.clientX-touchX;steer=Math.max(-1,Math.min(1,dx/35));touchX=e.clientX}});canvas.addEventListener("pointerup",()=>touchX=null);canvas.addEventListener("pointercancel",()=>touchX=null);
-resize();
-})();
+draw();
 </script>
 </body>
 </html>
